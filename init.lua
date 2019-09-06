@@ -3,40 +3,19 @@ local stone_limit = tonumber(minetest.settings:get("stone_limit")) or 25
 local iron_limit = tonumber(minetest.settings:get("iron_limit")) or 250
 local diamond_limit = tonumber(minetest.settings:get("diamond_limit")) or 1800
 
-local ie = minetest.request_insecure_environment() or
-   error("Mod requires decreased security settings in minetest.conf")
+--[[
 
-local driver = ie.require("luasql.postgres")
-local db = nil
-local env = nil
+init.lua
 
-local function prep_db()
-   env = assert (driver.postgres())
-   -- connect to data source
-   db = assert (env:connect("citadella", "mt"))
+Entrypoint to this plugin.
 
-   -- create reinforcements table
-   res = assert (db:execute[[
-     CREATE TABLE IF NOT EXISTS reinforcements(
-         x integer NOT NULL,
-         y integer NOT NULL,
-         z integer NOT NULL,
-         value integer NOT NULL,
-         material varchar(50) NOT NULL,
-         placer varchar(50) NOT NULL,
-         group_name varchar(50)
-     )]])
+--]]
+
+do
+   local modpath = minetest.get_modpath(minetest.get_current_modname())
+   dofile(modpath .. "/db.lua")
+   dofile(modpath .. "/playermanager.lua")
 end
-
-
-prep_db()
-
-
-minetest.register_on_shutdown(function()
-   db:close()
-   env:close()
-end)
-
 
 local resource_limits = {
    ["default:stone"]   = stone_limit,
@@ -70,15 +49,15 @@ local function register_reinforcement(pos, player_name, item_name)
    -- Effectively a stub for the DB functionality
    local value = resource_limits[item_name]
    -- reinforced_nodes[vtos(pos)] = { group = player, player_name = player_name, value = value, material = item_name }
-   res = assert(
-      db:execute(
-         string.format([[
-          INSERT INTO reinforcements
-          VALUES (%d, %d, %d, %d, '%s', '%s', NULL)]],
-            pos.x, pos.y, pos.z,
-            value,
-            db:escape(item_name),
-            db:escape(player_name))))
+   -- res = assert(
+   --    db:execute(
+   --       string.format([[
+   --        INSERT INTO reinforcement
+   --        VALUES (%d, %d, %d, %d, '%s', '%s', NULL)]],
+   --          pos.x, pos.y, pos.z,
+   --          value,
+   --          db:escape(item_name),
+   --          db:escape(player_name))))
 end
 
 
