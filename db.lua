@@ -16,7 +16,8 @@ local ie = minetest.request_insecure_environment() or
   prepare(db, query, ...)
 
 A PreparedStatement-like query execution helper for luasql-postgres.
-Automatically quotes and escapes strings passed as arguments. Parameters are denoted with the question-mark character ('?').
+Automatically quotes and escapes strings passed as arguments. Parameters are
+denoted with the question-mark character ('?').
 
 Reports count mismatches in SQL query parameters and function args and provides
 pretty good debugging context.
