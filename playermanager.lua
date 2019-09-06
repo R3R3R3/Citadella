@@ -31,19 +31,48 @@ local function generate_id()
    return random_string(32)
 end
 
-pm.register_player = function(player_name)
-   local timestamp = os.time(os.date("!*t"))
-   -- res = assert(
-   --    db:execute(
-   --       string.format([[
-   --        INSERT INTO player
-   --        VALUES (%d, %d, %d, %d, '%s', '%s', NULL)]],
-   --          pos.x, pos.y, pos.z,
-   --          value,
-   --          db:escape(item_name),
-   --          db:escape(player_name))))
+local QUERY_REGISTER_PLAYER = [[
+  INSERT INTO player (id, name, join_date)
+  VALUES (?, ?, CURRENT_TIMESTAMP)
+]]
+
+function pm.register_player(player_name)
+   local player_id = generate_id()
+   res = assert(prepare(db, QUERY_REGISTER_PLAYER, player_id, player_name))
 end
 
-pm.get_player = function(player_name)
+local QUERY_GET_PLAYER_BY_NAME = [[
+  SELECT * FROM player WHERE player.name = ?
+]]
+
+function pm.get_player_by_name(player_name)
+   cur = assert(prepare(db, QUERY_GET_PLAYER_BY_NAME, player_name))
+   return cur:fetch({}, "a")
+end
+
+local QUERY_GET_PLAYER_BY_ID = [[
+  SELECT * FROM player WHERE player.id = ?
+]]
+
+function pm.get_player_by_id(player_id)
+   cur = assert(prepare(db, QUERY_GET_PLAYER_BY_ID, player_id))
+   return cur:fetch({}, "a")
+end
+
+-- pm.register_player("Garfunel")
+
+--[[ GROUPS ]]--
+
+function pm.register_group(group_name, player)
    return nil
 end
+
+function pm.get_group_by_name(group_name)
+   return nil
+end
+
+function pm.get_group_by_id(group_id)
+   return nil
+end
+
+return pm

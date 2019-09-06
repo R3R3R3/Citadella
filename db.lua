@@ -77,7 +77,7 @@ function prepare(db, query, ...)
 end
 
 local driver = ie.require("luasql.postgres")
-local db = nil
+db = nil
 local env = nil
 
 local function prep_db()

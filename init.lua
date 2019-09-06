@@ -11,11 +11,9 @@ Entrypoint to this plugin.
 
 --]]
 
-do
-   local modpath = minetest.get_modpath(minetest.get_current_modname())
-   dofile(modpath .. "/db.lua")
-   dofile(modpath .. "/playermanager.lua")
-end
+local modpath = minetest.get_modpath(minetest.get_current_modname())
+dofile(modpath .. "/db.lua")
+local pm = dofile(modpath .. "/playermanager.lua")
 
 local resource_limits = {
    ["default:stone"]   = stone_limit,
@@ -89,20 +87,20 @@ minetest.register_chatcommand("ctr", {
    params = "",
    description = "Citadella reinforce with material",
    func = function(name, param)
-            local player = minetest.get_player_by_name(name)
-            if not player then
-               return false
-            end
-            local pname = player:get_player_name()
-            local current_pmode = player_modes[pname]
-            if current_pmode == nil or current_pmode ~= PLAYER_MODE_REINFORCE then
-               player_modes[pname] = PLAYER_MODE_REINFORCE
-            else
-               player_modes[pname] = PLAYER_MODE_NORMAL
-            end
-            minetest.chat_send_player(pname, "Citadella mode: " .. player_modes[pname])
-            return true
-          end,
+      local player = minetest.get_player_by_name(name)
+      if not player then
+         return false
+      end
+      local pname = player:get_player_name()
+      local current_pmode = player_modes[pname]
+      if current_pmode == nil or current_pmode ~= PLAYER_MODE_REINFORCE then
+         player_modes[pname] = PLAYER_MODE_REINFORCE
+      else
+         player_modes[pname] = PLAYER_MODE_NORMAL
+      end
+      minetest.chat_send_player(pname, "Citadella mode: " .. player_modes[pname])
+      return true
+   end
 })
 
 -- gross duplicated code
@@ -110,20 +108,20 @@ minetest.register_chatcommand("ctb", {
    params = "",
    description = "Citadella bypass owned reinforcements",
    func = function(name, param)
-            local player = minetest.get_player_by_name(name)
-            if not player then
-               return false
-            end
-            local pname = player:get_player_name()
-            local current_pmode = player_modes[pname]
-            if current_pmode == nil or current_pmode ~= PLAYER_MODE_BYPASS then
-               player_modes[pname] = PLAYER_MODE_BYPASS
-            else
-               player_modes[pname] = PLAYER_MODE_NORMAL
-            end
-            minetest.chat_send_player(pname, "Citadella mode: " .. player_modes[pname])
-            return true
-          end,
+      local player = minetest.get_player_by_name(name)
+      if not player then
+         return false
+      end
+      local pname = player:get_player_name()
+      local current_pmode = player_modes[pname]
+      if current_pmode == nil or current_pmode ~= PLAYER_MODE_BYPASS then
+         player_modes[pname] = PLAYER_MODE_BYPASS
+      else
+         player_modes[pname] = PLAYER_MODE_NORMAL
+      end
+      minetest.chat_send_player(pname, "Citadella mode: " .. player_modes[pname])
+      return true
+   end
 })
 
 -- gross duplicated code, but less so
@@ -131,15 +129,30 @@ minetest.register_chatcommand("cto", {
    params = "",
    description = "Citadella reset player mode",
    func = function(name, param)
-            local player = minetest.get_player_by_name(name)
-            if not player then
-               return false
-            end
-            local pname = player:get_player_name()
-            player_modes[pname] = PLAYER_MODE_NORMAL
-            return true
-          end,
+      local player = minetest.get_player_by_name(name)
+      if not player then
+         return false
+      end
+      local pname = player:get_player_name()
+      player_modes[pname] = PLAYER_MODE_NORMAL
+      return true
+   end
 })
+
+minetest.register_chatcommand("test", {
+   params = "",
+   description = "R3's test command",
+   func = function(name, param)
+      local player = minetest.get_player_by_name(name)
+      if not player then
+         return false
+      end
+      local pname = player:get_player_name()
+      minetest.chat_send_player(pname, dump(pm.get_player_by_name("Garfunel")))
+      return true
+   end
+})
+
 
 -- TODO: CTF
 -- XXX: documents say this isn't recommended, use node definition callbacks instead
