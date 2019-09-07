@@ -58,8 +58,10 @@ function prepare(db, query, ...)
 
          if valtype == "string" then
             escaped = "'" .. db:escape(val) .. "'"
-         elseif valtype == "nil" or valtype == "number" then
+         elseif valtype == "number" then
             escaped = db:escape(tostring(val))
+         elseif valtype == "nil" then
+            escaped = "NULL"
          else
             error("prepare(): Arg " .. tostring(i)
                      .. " is not of type: string, number, nil (context: \""
