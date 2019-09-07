@@ -88,7 +88,7 @@ local function prep_db()
    -- group table, named ctgroup because heck quoted table names
    res = assert(prepare(db, [[
      CREATE TABLE IF NOT EXISTS ctgroup (
-         id VARCHAR(32) NOT NULL,
+         id VARCHAR(16) NOT NULL,
          name VARCHAR(16) NOT NULL,
          description VARCHAR(128),
          creation_date TIMESTAMP NOT NULL,
@@ -111,7 +111,7 @@ local function prep_db()
    -- player table
    res = assert(prepare(db,  [[
      CREATE TABLE IF NOT EXISTS player (
-         id VARCHAR(32) NOT NULL,
+         id VARCHAR(16) NOT NULL,
          name VARCHAR(16) NOT NULL,
          join_date TIMESTAMP NOT NULL,
          PRIMARY KEY (id),
@@ -122,8 +122,8 @@ local function prep_db()
    -- TODO: sort of permissions, keep basic for now
    res = assert(prepare(db, [[
      CREATE TABLE IF NOT EXISTS player_ctgroup (
-         player_id varchar(32) REFERENCES player(id),
-         ctgroup_id varchar(32) REFERENCES ctgroup(id),
+         player_id varchar(16) REFERENCES player(id),
+         ctgroup_id varchar(16) REFERENCES ctgroup(id),
          permission varchar(32) NOT NULL,
          PRIMARY KEY (player_id, ctgroup_id)
      )]]))
