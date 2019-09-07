@@ -6,30 +6,25 @@ Database connection functionality via PostgreSQL.
 
 ]]--
 
--- TODO: other mods shouldn't be able to hijack our database connection
-
-local ie = minetest.request_insecure_environment() or
-   error("Mod requires decreased security settings in minetest.conf")
-
 --[[
-
-  prepare(db, query, ...)
-
-A PreparedStatement-like query execution helper for luasql-postgres.
-Automatically quotes and escapes strings passed as arguments. Parameters are
-denoted with the question-mark character ('?').
-
-Reports count mismatches in SQL query parameters and function args and provides
-pretty good debugging context.
-
-Acceptable arguments are of types: string, nil, number.
-
-Example usage:
-   prepare(db, "INSERT INTO tab VALUES (?, ?)", "Fred", 22)
-
-Doesn't support ? characters embedded in strings in query. Use:
-   prepare(db, "INSERT INTO tab2 VALUES (?)", "lol?")
-
+   --
+prepare(db, query, ...)         --
+   --
+A PreparedStatement-like query execution helper for luasql-postgres. --
+Automatically quotes and escapes strings passed as arguments. Parameters are --
+denoted with the question-mark character ('?'). --
+   --
+Reports count mismatches in SQL query parameters and function args and provides --
+pretty good debugging context.  --
+   --
+Acceptable arguments are of types: string, nil, number. --
+   --
+Example usage:                  --
+prepare(db, "INSERT INTO tab VALUES (?, ?)", "Fred", 22) --
+   --
+Doesn't support ? characters embedded in strings in query. Use: --
+prepare(db, "INSERT INTO tab2 VALUES (?)", "lol?") --
+   --
 --]]
 function prepare(db, query, ...)
    local join_table = {}
@@ -78,25 +73,17 @@ function prepare(db, query, ...)
    return db:execute(table.concat(join_table))
 end
 
+local ie = minetest.request_insecure_environment() or
+   error("Mod requires decreased security settings in minetest.conf")
+
 local driver = ie.require("luasql.postgres")
-db = nil
+local db = nil
 local env = nil
 
 local function prep_db()
    env = assert (driver.postgres())
    -- connect to data source
    db = assert (env:connect("citadella", "mt"))
-
-   -- group table, named ctgroup because heck quoted table names
-   res = assert(prepare(db, [[
-     CREATE TABLE IF NOT EXISTS ctgroup (
-         id VARCHAR(16) NOT NULL,
-         name VARCHAR(16) NOT NULL,
-         description VARCHAR(128),
-         creation_date TIMESTAMP NOT NULL,
-         PRIMARY KEY (id),
-         UNIQUE (name)
-     )]]))
 
    -- create reinforcements table
    res = assert(prepare(db, [[
@@ -109,26 +96,6 @@ local function prep_db()
          ctgroup_id VARCHAR(32) REFERENCES ctgroup(id),
          PRIMARY KEY (x, y, z)
      )]]))
-
-   -- player table
-   res = assert(prepare(db,  [[
-     CREATE TABLE IF NOT EXISTS player (
-         id VARCHAR(16) NOT NULL,
-         name VARCHAR(16) NOT NULL,
-         join_date TIMESTAMP NOT NULL,
-         PRIMARY KEY (id),
-         UNIQUE (name)
-     )]]))
-
-   -- maps players to groups/groups to players
-   -- TODO: sort of permissions, keep basic for now
-   res = assert(prepare(db, [[
-     CREATE TABLE IF NOT EXISTS player_ctgroup (
-         player_id varchar(16) REFERENCES player(id),
-         ctgroup_id varchar(16) REFERENCES ctgroup(id),
-         permission varchar(32) NOT NULL,
-         PRIMARY KEY (player_id, ctgroup_id)
-     )]]))
 end
 
 
@@ -139,3 +106,5 @@ minetest.register_on_shutdown(function()
    db:close()
    env:close()
 end)
+
+return db
