@@ -138,6 +138,17 @@ function pm.get_player_group(player_id, ctgroup_id)
    end
 end
 
+local QUERY_UPDATE_PLAYER_GROUP_PERMISSION = [[
+  UPDATE player_ctgroup SET permission = ?
+  WHERE player_ctgroup.player_id = ?
+    AND player_ctgroup.ctgroup_id = ?
+]]
+
+function pm.update_player_group(player_id, ctgroup_id, permission)
+   return assert(prepare(db, QUERY_UPDATE_PLAYER_GROUP_PERMISSION,
+                         permission, player_id, ctgroup_id))
+end
+
 --[[ End of DB interface ]]--
 
 local function pm_parse_params(pname, params)
@@ -186,9 +197,7 @@ local function pm_parse_params(pname, params)
          "Admins: "..tostring(nil).."\n" ..
          "Mods: "..tostring(nil).."\n" ..
          "Members: "..tostring(nil).."\n"
-   end
-
-   if action == "add" then
+   elseif action == "add" then
       if permission ~= "admin" then
          return false, "You don't have permission to do that."
       end
@@ -209,6 +218,33 @@ local function pm_parse_params(pname, params)
       pm.register_player_group_permission(target_player.id, ctgroup_id, "member")
       return true, "Player '"..target_player.name.."' added to group '" ..
          group_name.."'."
+   elseif action == "rank" then
+      if permission ~= "admin" then
+         return false, "You don't have permission to do that."
+      end
+      local target = accum[3]
+      local target_rank = accum[4]
+      local target_player = pm.get_player_by_name(target)
+      if not target_player then
+         return false, "Player '"..target.."' not found."
+      end
+      local target_player_group_info
+         = pm.get_player_group(target_player.id, ctgroup_id)
+      if not target_player_group_info then
+         return false, "Player '"..target_player.name ..
+            "' is not in group '"..group_name.."'."
+      end
+      if target_rank ~= "member" and
+         target_rank ~= "mod" and
+         target_rank ~= "admin"
+      then
+         return false, "Invalid permission '"..target_rank ..
+            "', must be one of: member, mod, admin."
+      end
+
+      pm.update_player_group(target_player.id, ctgroup_id, target_rank)
+      return true, "Promoted player '"..target_player.name.."' to '" ..
+         target_rank.."' of group '"..group_name.."'."
    end
 
    return false, "Unknown action: '"..action.."'."
