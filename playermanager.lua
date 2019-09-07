@@ -34,11 +34,12 @@ end
 local QUERY_REGISTER_PLAYER = [[
   INSERT INTO player (id, name, join_date)
   VALUES (?, ?, CURRENT_TIMESTAMP)
+  ON CONFLICT DO NOTHING
 ]]
 
 function pm.register_player(player_name)
    local player_id = generate_id()
-   assert(prepare(db, QUERY_REGISTER_PLAYER, player_id, player_name))
+   return assert(prepare(db, QUERY_REGISTER_PLAYER, player_id, player_name))
 end
 
 local QUERY_GET_PLAYER_BY_NAME = [[
@@ -46,8 +47,12 @@ local QUERY_GET_PLAYER_BY_NAME = [[
 ]]
 
 function pm.get_player_by_name(player_name)
-   local cur = assert(prepare(db, QUERY_GET_PLAYER_BY_NAME, player_name))
-   return cur:fetch({}, "a")
+   local cur = prepare(db, QUERY_GET_PLAYER_BY_NAME, player_name)
+   if cur then
+      return cur:fetch({}, "a")
+   else
+      return nil
+   end
 end
 
 local QUERY_GET_PLAYER_BY_ID = [[
@@ -55,8 +60,12 @@ local QUERY_GET_PLAYER_BY_ID = [[
 ]]
 
 function pm.get_player_by_id(player_id)
-   local cur = assert(prepare(db, QUERY_GET_PLAYER_BY_ID, player_id))
-   return cur:fetch({}, "a")
+   local cur = prepare(db, QUERY_GET_PLAYER_BY_ID, player_id)
+   if cur then
+      return cur:fetch({}, "a")
+   else
+      return nil
+   end
 end
 
 -- pm.register_player("Garfunel")
@@ -66,11 +75,12 @@ end
 local QUERY_REGISTER_GROUP = [[
   INSERT INTO ctgroup (id, name, creation_date)
   VALUES (?, ?, CURRENT_TIMESTAMP)
+  ON CONFLICT DO NOTHING
 ]]
 
 function pm.register_group(ctgroup_name)
    local ctgroup_id = generate_id()
-   assert(prepare(db, QUERY_REGISTER_GROUP, ctgroup_id, ctgroup_name))
+   return assert(prepare(db, QUERY_REGISTER_GROUP, ctgroup_id, ctgroup_name))
 end
 
 local QUERY_GET_GROUP_BY_NAME = [[
@@ -78,8 +88,12 @@ local QUERY_GET_GROUP_BY_NAME = [[
 ]]
 
 function pm.get_group_by_name(ctgroup_name)
-   local cur = assert(prepare(db, QUERY_GET_GROUP_BY_NAME, ctgroup_name))
-   return cur:fetch({}, "a")
+   local cur = prepare(db, QUERY_GET_GROUP_BY_NAME, ctgroup_name)
+   if cur then
+      return cur:fetch({}, "a")
+   else
+      return nil
+   end
 end
 
 local QUERY_GET_GROUP_BY_ID = [[
@@ -87,8 +101,12 @@ local QUERY_GET_GROUP_BY_ID = [[
 ]]
 
 function pm.get_group_by_id(ctgroup_id)
-   local cur = assert(prepare(db, QUERY_GET_GROUP_BY_ID, ctgroup_id))
-   return cur:fetch({}, "a")
+   local cur = prepare(db, QUERY_GET_GROUP_BY_ID, ctgroup_id)
+   if cur then
+      return cur:fetch({}, "a")
+   else
+      return nil
+   end
 end
 
 --[[ PLAYER <--> GROUPS ]]--
@@ -96,11 +114,12 @@ end
 local QUERY_REGISTER_PLAYER_GROUP_PERMISSION = [[
   INSERT INTO player_ctgroup (player_id, ctgroup_id, permission)
   VALUES (?, ?, ?)
+  ON CONFLICT DO NOTHING
 ]]
 
 function pm.register_player_group_permission(player_id, ctgroup_id, permission)
-   assert(prepare(db, QUERY_REGISTER_PLAYER_GROUP_PERMISSION,
-                  player_id, ctgroup_id, permission))
+   return assert(prepare(db, QUERY_REGISTER_PLAYER_GROUP_PERMISSION,
+                         player_id, ctgroup_id, permission))
 end
 
 local QUERY_GET_PLAYER_GROUP_PERMISSION = [[
