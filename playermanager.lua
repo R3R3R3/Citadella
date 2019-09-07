@@ -128,31 +128,121 @@ local QUERY_GET_PLAYER_GROUP_PERMISSION = [[
     AND player_ctgroup.ctgroup_id = ?
 ]]
 
-function pm.get_player_group_permission(player_id, ctgroup_id)
-   local cur = assert(prepare(db, QUERY_GET_PLAYER_GROUP_PERMISSION,
-                              player_id, ctgroup_id))
-   return (cur:fetch({}, "a")).permission
+function pm.get_player_group(player_id, ctgroup_id)
+   local cur = prepare(db, QUERY_GET_PLAYER_GROUP_PERMISSION,
+                       player_id, ctgroup_id)
+   if cur then
+      return cur:fetch({}, "a")
+   else
+      return nil
+   end
 end
 
-minetest.register_chatcommand("mkgrp", {
-   params = "<grpname>",
-   description = "Make a PlayerManager group",
-   func = function(name, param)
-      local player = minetest.get_player_by_name(name)
+--[[ End of DB interface ]]--
+
+local function pm_parse_params(pname, params)
+   local accum = {}
+   for chunk in string.gmatch(params, "[^%s]+") do
+      table.insert(accum, chunk)
+   end
+
+   if #accum < 2 then
+      return false, "Malformed command."
+   end
+
+   local action = accum[1]
+   local group_name = accum[2]
+
+   local player_id = pm.get_player_by_name(pname).id
+
+   if action == "create" then
+      if string.len(group_name) > 16 then
+         return false, "Group name '"..group_name..
+            "' is too long (16 character limit)."
+      end
+      pm.register_group(group_name)
+      local ctgroup_id = pm.get_group_by_name(group_name).id
+      pm.register_player_group_permission(player_id, ctgroup_id, "admin")
+      return true, "Group '"..group_name.."' created successfully."
+   end
+
+   local ctgroup = pm.get_group_by_name(group_name)
+   if not ctgroup then
+      return false, "Group '"..group_name.."' not found."
+   end
+   local ctgroup_id = ctgroup.id
+
+   local player_group_info = pm.get_player_group(player_id, ctgroup_id)
+   if not player_group_info then
+      return false, "You are not on group '"..group_name.."'."
+   end
+   local permission = player_group_info.permission
+
+   if action == "info" then
+      return true,
+      "[Group: "..group_name.."]\n" ..
+         "Your permission level: "..permission.."\n" ..
+         "\n" ..
+         "Admins: "..tostring(nil).."\n" ..
+         "Mods: "..tostring(nil).."\n" ..
+         "Members: "..tostring(nil).."\n"
+   end
+
+   if action == "add" then
+      if permission ~= "admin" then
+         return false, "You don't have permission to do that."
+      end
+
+      local target = accum[3]
+      local target_player = pm.get_player_by_name(target)
+      if not target_player then
+         return false, "Player '"..target.."' not found."
+      end
+
+      local target_player_group_info
+         = pm.get_player_group(target_player.id, ctgroup_id)
+      if target_player_group_info then
+         return false, "Player '"..target_player.name ..
+            "' is already in group '"..group_name.."'."
+      end
+
+      pm.register_player_group_permission(target_player.id, ctgroup_id, "member")
+      return true, "Player '"..target_player.name.."' added to group '" ..
+         group_name.."'."
+   end
+
+   return false, "Unknown action: '"..action.."'."
+end
+
+
+minetest.register_chatcommand("group", {
+   params = "<action> <group name> [<params...>]",
+   description = "PlayerManager group management.",
+   func = function(pname, params)
+      local player = minetest.get_player_by_name(pname)
       if not player then
          return false
       end
-      local pname = player:get_player_name()
-      minetest.chat_send_player(pname, param)
-
-      pm.register_player(pname)
-      local player_id = pm.get_player_by_name(pname).id
-      pm.register_group(param)
-      local ctgroup_id = pm.get_group_by_name(param).id
-      pm.register_player_group_permission(player_id, ctgroup_id, "admin")
-      return true
+      local success, message = pm_parse_params(pname, params)
+      minetest.chat_send_player(pname, message)
+      return success
    end
 })
 
+
+minetest.register_on_joinplayer(function(player)
+      local pname = player:get_player_name(player)
+      if not pm.get_player_by_name(pname) then
+         pm.register_player(pname)
+         minetest.after(
+            3,
+            function(pname)
+               minetest.chat_send_player(pname,
+                  "You wake up in an unfamiliar place..."
+               )
+            end,
+            pname)
+      end
+end)
 
 return pm
