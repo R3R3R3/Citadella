@@ -7,24 +7,24 @@ Database connection functionality via PostgreSQL.
 ]]--
 
 --[[
-   --
-prepare(db, query, ...)         --
-   --
-A PreparedStatement-like query execution helper for luasql-postgres. --
-Automatically quotes and escapes strings passed as arguments. Parameters are --
-denoted with the question-mark character ('?'). --
-   --
-Reports count mismatches in SQL query parameters and function args and provides --
-pretty good debugging context.  --
-   --
-Acceptable arguments are of types: string, nil, number. --
-   --
-Example usage:                  --
-prepare(db, "INSERT INTO tab VALUES (?, ?)", "Fred", 22) --
-   --
-Doesn't support ? characters embedded in strings in query. Use: --
-prepare(db, "INSERT INTO tab2 VALUES (?)", "lol?") --
-   --
+
+  prepare(db, query, ...)
+
+A PreparedStatement-like query execution helper for luasql-postgres.
+Automatically quotes and escapes strings passed as arguments. Parameters are
+denoted with the question-mark character ('?').
+
+Reports count mismatches in SQL query parameters and function args and provides
+pretty good debugging context.
+
+Acceptable arguments are of types: string, nil, number.
+
+Example usage:
+   prepare(db, "INSERT INTO tab VALUES (?, ?)", "Fred", 22)
+
+Doesn't support ? characters embedded in strings in query. Use:
+   prepare(db, "INSERT INTO tab2 VALUES (?)", "lol?")
+
 --]]
 function prepare(db, query, ...)
    local join_table = {}

@@ -177,10 +177,13 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 end)
 
 
+-- TODO: don't completely clobber other plugin's protection
+local is_protected_fn = minetest.is_protected
+
 -- BLOCK-BREAKING, /ctb
 function minetest.is_protected(pos, pname)
    local reinf = ct.get_reinforcement(pos)
-   if reinf ~= nil then
+   if reinf then
       if ct.player_modes[pname] == ct.PLAYER_MODE_BYPASS
       and reinf.player_name == pname then
          ct.remove_reinforcement(pos)
