@@ -42,4 +42,58 @@ minetest.register_on_shutdown(function()
    env:close()
 end)
 
+local QUERY_REGISTER_REINFORCEMENT = [[
+  INSERT INTO reinforcement (x, y, z, value, material, ctgroup_id)
+  VALUES (?, ?, ?, ?, ?, ?)
+]]
+
+function ctdb.register_reinforcement(pos, ctgroup_id, item_name)
+   local value = ct.resource_limits[item_name]
+   assert(u.prepare(db, QUERY_REGISTER_REINFORCEMENT,
+                    pos.x, pos.y, pos.z,
+                    value, item_name, ctgroup_id))
+end
+
+local QUERY_REMOVE_REINFORCEMENT = [[
+  DELETE FROM reinforcement
+  WHERE reinforcement.x = ?
+    AND reinforcement.y = ?
+    AND reinforcement.z = ?
+]]
+
+function ctdb.remove_reinforcement(pos)
+   assert(u.prepare(db, QUERY_REMOVE_REINFORCEMENT,
+                    pos.x, pos.y, pos.z))
+end
+
+local QUERY_GET_REINFORCEMENT = [[
+  SELECT * FROM reinforcement
+  WHERE reinforcement.x = ?
+    AND reinforcement.y = ?
+    AND reinforcement.z = ?
+]]
+
+function ctdb.get_reinforcement(pos)
+   local cur = u.prepare(db, QUERY_GET_REINFORCEMENT,
+                         pos.x, pos.y, pos.z)
+   if cur then
+      return cur:fetch({}, "a")
+   else
+      return nil
+   end
+end
+
+local QUERY_MODIFY_REINFORCEMENT = [[
+  UPDATE reinforcement
+  SET reinforcement.value = reinforcement.value + ?
+  WHERE reinforcement.x = ?
+    AND reinforcement.y = ?
+    AND reinforcement.z = ?
+]]
+
+function ctdb.modify_reinforcement(pos, delta)
+   assert(u.prepare(db, QUERY_MODIFY_REINFORCEMENT, delta,
+                    pos.x, pos.y, pos.z))
+end
+
 return db

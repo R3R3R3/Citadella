@@ -28,43 +28,28 @@ ct.player_modes = {}
 -- Convert this to DB
 ct.reinforced_nodes = {}
 
-function ct.register_reinforcement(pos, player_name, item_name)
-   -- Effectively a stub for the DB functionality
-   local value = ct.resource_limits[item_name]
-   ct.reinforced_nodes[vtos(pos)] = { group = player, player_name = player_name, value = value, material = item_name }
-   -- res = assert(
-   --    db:execute(
-   --       string.format([[
-   --        INSERT INTO reinforcement
-   --        VALUES (%d, %d, %d, %d, '%s', '%s', NULL)]],
-   --          pos.x, pos.y, pos.z,
-   --          value,
-   --          db:escape(item_name),
-   --          db:escape(player_name))))
-end
-
-
 function ct.remove_reinforcement(pos)
    -- Effectively a stub for the DB functionality
-   ct.reinforced_nodes[vtos(pos)] = nil
+   -- ct.reinforced_nodes[vtos(pos)] = nil
 end
 
 
 function ct.modify_reinforcement(pos, delta)
-   local value = ct.reinforced_nodes[vtos(pos)].value
-   if value < 1 then
-      ct.remove_reinforcement(pos)
-      return 0
-   else
-      ct.reinforced_nodes[vtos(pos)].value = value + delta
-      return ct.reinforced_nodes[vtos(pos)].value
-   end
+   -- local value = ct.reinforced_nodes[vtos(pos)].value
+   -- if value < 1 then
+   --    ct.remove_reinforcement(pos)
+   --    return 0
+   -- else
+   --    ct.reinforced_nodes[vtos(pos)].value = value + delta
+   --    return ct.reinforced_nodes[vtos(pos)].value
+   -- end
+
 end
 
 
 function ct.get_reinforcement(pos)
    -- Effectively a stub for the DB functionality
-   return ct.reinforced_nodes[vtos(pos)]
+   -- return ct.reinforced_nodes[vtos(pos)]
 end
 
 

@@ -7,6 +7,7 @@ Entrypoint to this plugin.
 --]]
 
 ct = {}
+ctdb = {}
 
 minetest.debug("Citadella initialised")
 
