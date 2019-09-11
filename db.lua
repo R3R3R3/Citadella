@@ -83,6 +83,36 @@ function ctdb.get_reinforcement(pos)
    end
 end
 
+local QUERY_GET_REINFORCEMENTS = [[
+  SELECT * FROM reinforcement
+  WHERE reinforcement.x BETWEEN ? AND ?
+    AND reinforcement.y BETWEEN ? AND ?
+    AND reinforcement.z BETWEEN ? AND ?
+]]
+
+function ctdb.get_reinforcements_for_cache(cache, pos1, pos2)
+   local cur = u.prepare(db, QUERY_GET_REINFORCEMENTS,
+                         pos1.x, pos2.x,
+                         pos1.y, pos2.y,
+                         pos1.z, pos2.z)
+   local row = cur.fetch({}, "a")
+   local reinfs = {}
+   while row do
+      local x, y, z = row.x, row.y, row.z
+      reinfs[ptos(x, y, z)] = {
+         x = x, y = y, z = z,
+         value = row.value,
+         material = row.material,
+         ctgroup_id = row.ctgroup_id
+      }
+      row = cur:fetch(row, "a")
+   end
+   cache[vtos(pos1)] = {
+      reinforcements = reinfs,
+      time_added = os.time(os.date("!*t"))
+   }
+end
+
 local QUERY_MODIFY_REINFORCEMENT = [[
   UPDATE reinforcement
   SET reinforcement.value = reinforcement.value + ?

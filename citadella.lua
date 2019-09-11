@@ -16,6 +16,10 @@ ct.PLAYER_MODE_BYPASS = "bypass"
 
 -- Stringifies a vector V, frequently used as a table key
 --[[ USE dump(tab) TO STRINGIFY A TABLE ]]--
+local function ptos(x, y, z)
+   return tostring(x) .. ", " .. tostring(y) .. ", " .. tostring(z)
+end
+
 local function vtos(v)
    return tostring(v.x) .. ", " .. tostring(v.y) .. ", " .. tostring(v.z)
 end
