@@ -95,8 +95,8 @@ function ctdb.get_reinforcements_for_cache(cache, pos1, pos2)
                          pos1.x, pos2.x,
                          pos1.y, pos2.y,
                          pos1.z, pos2.z)
-   local row = cur.fetch({}, "a")
    local reinfs = {}
+   local row = cur:fetch({}, "a")
    while row do
       local x, y, z = row.x, row.y, row.z
       reinfs[ptos(x, y, z)] = {

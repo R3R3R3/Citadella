@@ -37,3 +37,24 @@ function ct.get_reinforcement(pos)
    end
    return chunk_reinf.reinforcements[vtos(pos)]
 end
+
+
+function ct.modify_reinforcement(pos, delta)
+   local reinf = ct.get_reinforcement(pos)
+   reinf.value = reinf.value + delta
+   return reinf.value
+end
+
+
+function ct.register_reinforcement(pos, ctgroup_id, item_name, resource_limit)
+   local vchunk = get_pos_chunk(pos)
+   chunk_reinf_cache[vtos(vchunk)].time_added = os.time(os.date("!*t"))
+   chunk_reinf_cache[vtos(vchunk)].reinforcements[vtos(pos)] = {
+      x = pos.x, y = pos.y, z = pos.z,
+      value = resource_limit,
+      material = item_name,
+      ctgroup_id = ctgroup_id
+   }
+
+   ctdb.register_reinforcement(pos, ctgroup_id, item_name)
+end

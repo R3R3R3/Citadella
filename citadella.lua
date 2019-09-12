@@ -1,4 +1,3 @@
-local db = ...
 
 local stone_limit = tonumber(minetest.settings:get("stone_limit")) or 25
 local iron_limit = tonumber(minetest.settings:get("iron_limit")) or 250
@@ -14,51 +13,16 @@ ct.PLAYER_MODE_NORMAL = "normal"
 ct.PLAYER_MODE_REINFORCE = "reinforce"
 ct.PLAYER_MODE_BYPASS = "bypass"
 
--- Stringifies a vector V, frequently used as a table key
---[[ USE dump(tab) TO STRINGIFY A TABLE ]]--
-local function ptos(x, y, z)
-   return tostring(x) .. ", " .. tostring(y) .. ", " .. tostring(z)
-end
-
-local function vtos(v)
-   return tostring(v.x) .. ", " .. tostring(v.y) .. ", " .. tostring(v.z)
-end
-
-
 -- Mapping of Player -> Citadel mode
 -- XXX: couldn't get player:set_properties working so this could be nicer
 ct.player_modes = {}
+ct.player_current_reinf_group = {}
 
 -- Convert this to DB
 ct.reinforced_nodes = {}
 
-function ct.remove_reinforcement(pos)
-   -- Effectively a stub for the DB functionality
-   -- ct.reinforced_nodes[vtos(pos)] = nil
-end
-
-
-function ct.modify_reinforcement(pos, delta)
-   -- local value = ct.reinforced_nodes[vtos(pos)].value
-   -- if value < 1 then
-   --    ct.remove_reinforcement(pos)
-   --    return 0
-   -- else
-   --    ct.reinforced_nodes[vtos(pos)].value = value + delta
-   --    return ct.reinforced_nodes[vtos(pos)].value
-   -- end
-
-end
-
-
-function ct.get_reinforcement(pos)
-   -- Effectively a stub for the DB functionality
-   -- return ct.reinforced_nodes[vtos(pos)]
-end
-
-
 minetest.register_chatcommand("ctr", {
-   params = "",
+   params = "<group>",
    description = "Citadella reinforce with material",
    func = function(name, param)
       local player = minetest.get_player_by_name(name)
@@ -68,11 +32,34 @@ minetest.register_chatcommand("ctr", {
       local pname = player:get_player_name()
       local current_pmode = ct.player_modes[pname]
       if current_pmode == nil or current_pmode ~= ct.PLAYER_MODE_REINFORCE then
+         local player = pm.get_player_by_name(pname)
+         local ctgroup = pm.get_group_by_name(param)
+         if not ctgroup then
+            minetest.chat_send_player(
+               pname,
+               "Group '" .. param .. "' does not exist."
+            )
+            return false
+         end
+         local player_group = pm.get_player_group(player.id, ctgroup.id)
+         if not player_group then
+            minetest.chat_send_player(
+               pname,
+               "You are not on group '" .. param .. "'."
+            )
+            return false
+         end
          ct.player_modes[pname] = ct.PLAYER_MODE_REINFORCE
+         ct.player_current_reinf_group[pname] = ctgroup
+         minetest.chat_send_player(
+            pname,
+            "Citadella mode: " .. ct.player_modes[pname] ..
+               " (group: '" .. ctgroup.name .. "')"
+         )
       else
          ct.player_modes[pname] = ct.PLAYER_MODE_NORMAL
+         minetest.chat_send_player(pname, "Citadella mode: " .. ct.player_modes[pname])
       end
-      minetest.chat_send_player(pname, "Citadella mode: " .. ct.player_modes[pname])
       return true
    end
 })
@@ -109,6 +96,7 @@ minetest.register_chatcommand("cto", {
       end
       local pname = player:get_player_name()
       ct.player_modes[pname] = ct.PLAYER_MODE_NORMAL
+      minetest.chat_send_player(pname, "Citadella mode: " .. ct.player_modes[pname])
       return true
    end
 })
@@ -140,22 +128,26 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
       local pname = puncher:get_player_name()
       -- If we're in /ctr mode
       if ct.player_modes[pname] == ct.PLAYER_MODE_REINFORCE then
+         local current_reinf_group = ct.player_current_reinf_group[pname]
          local item = puncher:get_wielded_item()
          -- If we punch something with a reinforcement item
          local item_name = item:get_name()
          local resource_limit = ct.resource_limits[item_name]
          if resource_limit ~= nil then
             local reinf = ct.get_reinforcement(pos)
-            if reinf == nil then
+            if not reinf then
                -- Remove item from player's wielded stack
                item:take_item()
                puncher:set_wielded_item(item)
                -- Set node's reinforcement value to the default for this material
-               ct.register_reinforcement(pos, pname, item_name)
+               ct.register_reinforcement(
+                  pos, current_reinf_group.id, item_name, resource_limit
+               )
                minetest.chat_send_player(
                   pname,
                   "Reinforced block ("..vtos(pos)..") with " .. item_name ..
-                     " (" .. tostring(resource_limit) .. ")"
+                     " (" .. tostring(resource_limit) .. ") (group: '" ..
+                     current_reinf_group.name .. "')."
                )
             else
                minetest.chat_send_player(pname, "Block is already reinforced: " .. reinf.material ..
@@ -172,22 +164,45 @@ local is_protected_fn = minetest.is_protected
 -- BLOCK-BREAKING, /ctb
 function minetest.is_protected(pos, pname)
    local reinf = ct.get_reinforcement(pos)
-   if reinf then
-      if ct.player_modes[pname] == ct.PLAYER_MODE_BYPASS
-      and reinf.player_name == pname then
-         ct.remove_reinforcement(pos)
-         -- TODO: player may want the reinforcement material back :)
+   if not reinf then
+      return false
+   end
+   if ct.player_modes[pname] == ct.PLAYER_MODE_BYPASS then
+      -- Figure out if player is in the block's reinf group
+      local player_id = pm.get_player_by_name(pname).id
+      local player_groups = pm.get_groups_for_player(player_id)
+      local reinf_ctgroup_id = reinf.ctgroup_id
+      local reinf_id_in_group_ids = false
+
+      for _, group in ipairs(player_groups) do
+         if reinf_ctgroup_id == group.id then
+            reinf_id_in_group_ids = true
+            break
+         end
+      end
+
+      if reinf_id_in_group_ids then
+         local value = reinf.value
+         ct.modify_reinforcement(pos, -value)
          return false
       else
-         -- Decrement reinforcement
-         local remaining = ct.modify_reinforcement(pos, -1)
-         if remaining > 0 then
-            minetest.chat_send_player(
-               pname,
-               "Block reinforcement remaining: " .. tostring(remaining)
-            )
-         end
+         minetest.chat_send_player(pname, "You can't bypass this!")
          return true
       end
+
+      -- TODO: player may want the reinforcement material back :)
+   else
+      -- Decrement reinforcement
+      local remaining = ct.modify_reinforcement(pos, -1)
+      if remaining > 0 then
+         minetest.chat_send_player(
+            pname,
+            "Block reinforcement remaining: " .. tostring(remaining)
+         )
+         return true
+      else
+         return false
+      end
    end
+
 end
