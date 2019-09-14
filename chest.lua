@@ -9,16 +9,18 @@ local function has_locked_chest_privilege(pos, player)
    local player_groups = pm.get_groups_for_player(player_id)
    local reinf_ctgroup_id = reinf.ctgroup_id
    local reinf_id_in_group_ids = false
+   local group_name = ""
 
    for _, group in ipairs(player_groups) do
       if reinf_ctgroup_id == group.id then
+         group_name = group.name
          reinf_id_in_group_ids = true
          break
       end
    end
 
    if reinf_id_in_group_ids then
-      return true
+      return true, reinf, group_name
    else
       minetest.chat_send_player(pname, "Chest is locked!")
       return false
@@ -42,25 +44,39 @@ minetest.register_craft({
       }
 })
 
-local open = "size[8,10]"..
-	-- default.gui_bg ..
-	-- default.gui_bg_img ..
-	-- default.gui_slots ..
-	"list[current_name;main;0,0.3;8,4;]"..
-	"list[current_player;main;0,4.85;8,1;]" ..
-	"list[current_player;main;0,6.08;8,3;8]" ..
-	"listring[current_name;main]" ..
-	"listring[current_player;main]" ..
-	"button[3,9;2,1;open;Close]" -- ..
-	-- default.get_hotbar_bg(0,4.85)
 
-local closed = "size[2,1]"..
-	"button[0,0;2,1;open;Open]"
+local function make_open_formspec(reinf, group_name)
+   local chest_title = "Chest"
+   if reinf then
+      chest_title = "Locked Chest (group: '" .. group_name .. "', "
+         .. tostring(reinf.material) .. ", " .. tostring(reinf.value) .. "/"
+         .. tostring(ct.resource_limits[reinf.material]) .. ")"
+   end
+
+   local open = {
+      "size[8,10]",
+      "label[0,0;", chest_title, "]",
+      -- default.gui_bg ,
+      -- default.gui_bg_img ,
+      -- default.gui_slots ,
+      "list[current_name;main;0,0.7;8,4;]",
+      "list[current_player;main;0,5.2;8,1;]",
+      "list[current_player;main;0,6.3;8,3;8]",
+      "listring[current_name;main]",
+      "listring[current_player;main]",
+      "button[3,9.35;2,1;open;Close]" -- ,
+      -- default.get_hotbar_bg(0,4.85)
+   }
+   return table.concat(open, "")
+end
+
+local closed = "size[2,0.75]"..
+	"button[0,0.0;2,1;open;Open]"
 
 minetest.register_node(
    "citadella:chest",
    {
-      description = "Citadella's standard chest",
+      description = "Chest",
       tiles ={"default_chest.png^[sheet:2x2:0,0", "default_chest.png^[sheet:2x2:0,0",
               "default_chest.png^[sheet:2x2:1,0", "default_chest.png^[sheet:2x2:1,0",
               "default_chest.png^[sheet:2x2:1,0", "default_chest.png^[sheet:2x2:1,1"},
@@ -71,7 +87,7 @@ minetest.register_node(
       sounds = default.node_sound_wood_defaults(),
       on_construct = function(pos)
          local meta = minetest.get_meta(pos)
-         meta:set_string("formspec", open)
+         meta:set_string("formspec", closed)
          -- meta:set_string("infotext", "Locked chest")
          -- meta:set_string("owner", "")
          local inv = meta:get_inventory()
@@ -130,10 +146,10 @@ minetest.register_node(
 
       on_receive_fields = function(pos, formname, fields, sender)
          local meta = minetest.get_meta(pos)
-
-         if has_locked_chest_privilege(pos, sender) then
+         local can_open, reinf, group_name = has_locked_chest_privilege(pos, sender)
+         if can_open then
             if fields.open == "Open" then
-               meta:set_string("formspec", open)
+               meta:set_string("formspec", make_open_formspec(reinf, group_name))
             else
                meta:set_string("formspec", closed)
             end
