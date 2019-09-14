@@ -6,6 +6,7 @@ local function has_locked_chest_privilege(pos, player)
       return true
    end
 
+   -- TODO: this code keeps getting duplicated...
    local player_id = pm.get_player_by_name(pname).id
    local player_groups = pm.get_groups_for_player(player_id)
    local reinf_ctgroup_id = reinf.ctgroup_id

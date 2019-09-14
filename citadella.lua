@@ -152,11 +152,14 @@ minetest.register_chatcommand("test", {
 -- TODO: CTF
 -- XXX: documents say this isn't recommended, use node definition callbacks instead
 minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
+      local pname = puncher:get_player_name()
+      -- If we're in /ctr mode
+      if ct.player_modes[pname] == ct.PLAYER_MODE_FORTIFY then
 
+      end
 end)
 
 
--- /CTR block reinforce functionality
 minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
       local pname = puncher:get_player_name()
       -- If we're in /ctr mode
@@ -187,6 +190,35 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
                                             " (" .. tostring(reinf.value) .. ")")
             end
          end
+      elseif ct.player_modes[pname] == ct.PLAYER_MODE_INFO then
+         local reinf = ct.get_reinforcement(pos)
+         if reinf then
+            -- TODO: this code keeps getting duplicated...
+            local player_id = pm.get_player_by_name(pname).id
+            local player_groups = pm.get_groups_for_player(player_id)
+            local reinf_ctgroup_id = reinf.ctgroup_id
+            local group_name = nil
+
+            for _, group in ipairs(player_groups) do
+               if reinf_ctgroup_id == group.id then
+                  group_name = group.name
+                  break
+               end
+            end
+
+            local group_string = ""
+            if group_name then
+               group_string = " on group '" .. group_name .. "'"
+            end
+
+            minetest.chat_send_player(
+               pname,
+               "Block (" .. vtos(pos) ..") reinforced" .. group_string
+                  ..  " with: " .. reinf.material
+                  .. " (" .. tostring(reinf.value) .. "/"
+                  .. tostring(ct.resource_limits[reinf.material]) .. ")."
+            )
+         end
       end
 end)
 
@@ -202,6 +234,7 @@ function minetest.is_protected(pos, pname)
    end
    if ct.player_modes[pname] == ct.PLAYER_MODE_BYPASS then
       -- Figure out if player is in the block's reinf group
+      -- TODO: this code keeps getting duplicated...
       local player_id = pm.get_player_by_name(pname).id
       local player_groups = pm.get_groups_for_player(player_id)
       local reinf_ctgroup_id = reinf.ctgroup_id
