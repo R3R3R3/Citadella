@@ -103,7 +103,8 @@ function ctdb.get_reinforcements_for_cache(cache, pos1, pos2)
          x = x, y = y, z = z,
          value = row.value,
          material = row.material,
-         ctgroup_id = row.ctgroup_id
+         ctgroup_id = row.ctgroup_id,
+         new = false
       }
       row = cur:fetch(row, "a")
    end
@@ -113,16 +114,16 @@ function ctdb.get_reinforcements_for_cache(cache, pos1, pos2)
    }
 end
 
-local QUERY_MODIFY_REINFORCEMENT = [[
+local QUERY_UPDATE_REINFORCEMENT = [[
   UPDATE reinforcement
-  SET reinforcement.value = reinforcement.value + ?
+  SET value = ?
   WHERE reinforcement.x = ?
     AND reinforcement.y = ?
     AND reinforcement.z = ?
 ]]
 
-function ctdb.modify_reinforcement(pos, delta)
-   assert(u.prepare(db, QUERY_MODIFY_REINFORCEMENT, delta,
+function ctdb.update_reinforcement(pos, new_value)
+   assert(u.prepare(db, QUERY_UPDATE_REINFORCEMENT, new_value,
                     pos.x, pos.y, pos.z))
 end
 

@@ -133,7 +133,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
          -- If we punch something with a reinforcement item
          local item_name = item:get_name()
          local resource_limit = ct.resource_limits[item_name]
-         if resource_limit ~= nil then
+         if resource_limit then
             local reinf = ct.get_reinforcement(pos)
             if not reinf then
                -- Remove item from player's wielded stack
@@ -183,7 +183,7 @@ function minetest.is_protected(pos, pname)
 
       if reinf_id_in_group_ids then
          local value = reinf.value
-         ct.modify_reinforcement(pos, -value)
+         ct.modify_reinforcement(pos, value)
          return false
       else
          minetest.chat_send_player(pname, "You can't bypass this!")
