@@ -20,51 +20,66 @@ ct.PLAYER_MODE_INFO = "info"
 ct.player_modes = {}
 ct.player_current_reinf_group = {}
 
+
+local function set_parameterized_mode(name, param, mode)
+   local player = minetest.get_player_by_name(name)
+   if not player then
+      return false
+   end
+   local pname = player:get_player_name()
+   local current_pmode = ct.player_modes[pname]
+   if current_pmode == nil or current_pmode ~= mode then
+      local player = pm.get_player_by_name(pname)
+      local ctgroup = pm.get_group_by_name(param)
+      if not ctgroup then
+         minetest.chat_send_player(
+            pname,
+            "Group '" .. param .. "' does not exist."
+         )
+         return false
+      end
+      local player_group = pm.get_player_group(player.id, ctgroup.id)
+      if not player_group then
+         minetest.chat_send_player(
+            pname,
+            "You are not on group '" .. param .. "'."
+         )
+         return false
+      end
+      ct.player_modes[pname] = mode
+      ct.player_current_reinf_group[pname] = ctgroup
+      minetest.chat_send_player(
+         pname,
+         "Citadella mode: " .. ct.player_modes[pname] ..
+            " (group: '" .. ctgroup.name .. "')"
+      )
+   else
+      ct.player_modes[pname] = ct.PLAYER_MODE_NORMAL
+      minetest.chat_send_player(pname, "Citadella mode: " .. ct.player_modes[pname])
+   end
+   return true
+end
+
+
 minetest.register_chatcommand("ctr", {
    params = "<group>",
    description = "Citadella reinforce with material",
    func = function(name, param)
-      local player = minetest.get_player_by_name(name)
-      if not player then
-         return false
-      end
-      local pname = player:get_player_name()
-      local current_pmode = ct.player_modes[pname]
-      if current_pmode == nil or current_pmode ~= ct.PLAYER_MODE_REINFORCE then
-         local player = pm.get_player_by_name(pname)
-         local ctgroup = pm.get_group_by_name(param)
-         if not ctgroup then
-            minetest.chat_send_player(
-               pname,
-               "Group '" .. param .. "' does not exist."
-            )
-            return false
-         end
-         local player_group = pm.get_player_group(player.id, ctgroup.id)
-         if not player_group then
-            minetest.chat_send_player(
-               pname,
-               "You are not on group '" .. param .. "'."
-            )
-            return false
-         end
-         ct.player_modes[pname] = ct.PLAYER_MODE_REINFORCE
-         ct.player_current_reinf_group[pname] = ctgroup
-         minetest.chat_send_player(
-            pname,
-            "Citadella mode: " .. ct.player_modes[pname] ..
-               " (group: '" .. ctgroup.name .. "')"
-         )
-      else
-         ct.player_modes[pname] = ct.PLAYER_MODE_NORMAL
-         minetest.chat_send_player(pname, "Citadella mode: " .. ct.player_modes[pname])
-      end
-      return true
+      set_parameterized_mode(name, param, ct.PLAYER_MODE_REINFORCE)
    end
 })
 
 
-function ct.set_player_mode(name, mode)
+minetest.register_chatcommand("ctf", {
+   params = "",
+   description = "Citadella fortify mode",
+   func = function(name, param)
+      set_parameterized_mode(name, param, ct.PLAYER_MODE_FORTIFY)
+   end
+})
+
+
+local function set_simple_mode(name, mode)
    local player = minetest.get_player_by_name(name)
    if not player then
       return false
@@ -89,7 +104,7 @@ minetest.register_chatcommand("ctb", {
       if param ~= "" then
          minetest.chat_send_player(name, "Error: Usage: /ctb")
       else
-         ct.set_player_mode(name, ct.PLAYER_MODE_BYPASS)
+         set_simple_mode(name, ct.PLAYER_MODE_BYPASS)
       end
    end
 })
@@ -102,20 +117,7 @@ minetest.register_chatcommand("cto", {
       if param ~= "" then
          minetest.chat_send_player(name, "Error: Usage: /cto")
       else
-         ct.set_player_mode(name, ct.PLAYER_MODE_NORMAL)
-      end
-   end
-})
-
-
-minetest.register_chatcommand("ctf", {
-   params = "",
-   description = "Citadella fortify mode",
-   func = function(name, param)
-      if param ~= "" then
-         minetest.chat_send_player(name, "Error: Usage: /ctf")
-      else
-         ct.set_player_mode(name, ct.PLAYER_MODE_FORTIFY)
+         set_simple_mode(name, ct.PLAYER_MODE_NORMAL)
       end
    end
 })
@@ -128,7 +130,7 @@ minetest.register_chatcommand("cti", {
       if param ~= "" then
          minetest.chat_send_player(name, "Error: Usage: /cti")
       else
-         ct.set_player_mode(name, ct.PLAYER_MODE_INFO)
+         set_simple_mode(name, ct.PLAYER_MODE_INFO)
       end
    end
 })
@@ -152,7 +154,7 @@ minetest.register_chatcommand("test", {
 -- TODO: CTF
 -- XXX: documents say this isn't recommended, use node definition callbacks instead
 minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
-      local pname = puncher:get_player_name()
+      local pname = placer:get_player_name()
       -- If we're in /ctr mode
       if ct.player_modes[pname] == ct.PLAYER_MODE_FORTIFY then
 
@@ -213,8 +215,8 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 
             minetest.chat_send_player(
                pname,
-               "Block (" .. vtos(pos) ..") reinforced" .. group_string
-                  ..  " with: " .. reinf.material
+               "Block (" .. vtos(pos) ..") is reinforced" .. group_string
+                  ..  " with " .. reinf.material
                   .. " (" .. tostring(reinf.value) .. "/"
                   .. tostring(ct.resource_limits[reinf.material]) .. ")."
             )
