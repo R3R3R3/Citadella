@@ -12,14 +12,13 @@ ct.resource_limits = {
 ct.PLAYER_MODE_NORMAL = "normal"
 ct.PLAYER_MODE_REINFORCE = "reinforce"
 ct.PLAYER_MODE_BYPASS = "bypass"
+ct.PLAYER_MODE_FORTIFY = "fortify"
+ct.PLAYER_MODE_INFO = "info"
 
 -- Mapping of Player -> Citadel mode
 -- XXX: couldn't get player:set_properties working so this could be nicer
 ct.player_modes = {}
 ct.player_current_reinf_group = {}
-
--- Convert this to DB
-ct.reinforced_nodes = {}
 
 minetest.register_chatcommand("ctr", {
    params = "<group>",
@@ -64,42 +63,76 @@ minetest.register_chatcommand("ctr", {
    end
 })
 
--- gross duplicated code
+
+function ct.set_player_mode(name, mode)
+   local player = minetest.get_player_by_name(name)
+   if not player then
+      return false
+   end
+   local pname = player:get_player_name()
+   local current_pmode = ct.player_modes[pname]
+   if mode == ct.PLAYER_MODE_NORMAL then
+      ct.player_modes[pname] = mode
+   elseif current_pmode == nil or current_pmode ~= mode then
+      ct.player_modes[pname] = mode
+   else -- Toggle
+      ct.player_modes[pname] = ct.PLAYER_MODE_NORMAL
+   end
+   minetest.chat_send_player(pname, "Citadella mode: " .. ct.player_modes[pname])
+end
+
+
 minetest.register_chatcommand("ctb", {
    params = "",
    description = "Citadella bypass owned reinforcements",
    func = function(name, param)
-      local player = minetest.get_player_by_name(name)
-      if not player then
-         return false
-      end
-      local pname = player:get_player_name()
-      local current_pmode = ct.player_modes[pname]
-      if current_pmode == nil or current_pmode ~= ct.PLAYER_MODE_BYPASS then
-         ct.player_modes[pname] = ct.PLAYER_MODE_BYPASS
+      if param ~= "" then
+         minetest.chat_send_player(name, "Error: Usage: /ctb")
       else
-         ct.player_modes[pname] = ct.PLAYER_MODE_NORMAL
+         ct.set_player_mode(name, ct.PLAYER_MODE_BYPASS)
       end
-      minetest.chat_send_player(pname, "Citadella mode: " .. ct.player_modes[pname])
-      return true
    end
 })
 
--- gross duplicated code, but less so
+
 minetest.register_chatcommand("cto", {
    params = "",
    description = "Citadella reset player mode",
    func = function(name, param)
-      local player = minetest.get_player_by_name(name)
-      if not player then
-         return false
+      if param ~= "" then
+         minetest.chat_send_player(name, "Error: Usage: /cto")
+      else
+         ct.set_player_mode(name, ct.PLAYER_MODE_NORMAL)
       end
-      local pname = player:get_player_name()
-      ct.player_modes[pname] = ct.PLAYER_MODE_NORMAL
-      minetest.chat_send_player(pname, "Citadella mode: " .. ct.player_modes[pname])
-      return true
    end
 })
+
+
+minetest.register_chatcommand("ctf", {
+   params = "",
+   description = "Citadella fortify mode",
+   func = function(name, param)
+      if param ~= "" then
+         minetest.chat_send_player(name, "Error: Usage: /ctf")
+      else
+         ct.set_player_mode(name, ct.PLAYER_MODE_FORTIFY)
+      end
+   end
+})
+
+
+minetest.register_chatcommand("cti", {
+   params = "",
+   description = "Citadella information mode",
+   func = function(name, param)
+      if param ~= "" then
+         minetest.chat_send_player(name, "Error: Usage: /cti")
+      else
+         ct.set_player_mode(name, ct.PLAYER_MODE_INFO)
+      end
+   end
+})
+
 
 minetest.register_chatcommand("test", {
    params = "",
