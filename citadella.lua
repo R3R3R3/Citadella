@@ -182,8 +182,8 @@ function minetest.is_protected(pos, pname)
       end
 
       if reinf_id_in_group_ids then
-         local value = reinf.value
-         ct.modify_reinforcement(pos, value)
+         -- set reinforcement value to zero
+         ct.modify_reinforcement(pos, 0)
          return false
       else
          minetest.chat_send_player(pname, "You can't bypass this!")
