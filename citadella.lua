@@ -193,7 +193,7 @@ function minetest.is_protected(pos, pname)
       -- TODO: player may want the reinforcement material back :)
    else
       -- Decrement reinforcement
-      local remaining = ct.modify_reinforcement(pos, -1)
+      local remaining = ct.modify_reinforcement(pos, reinf.value - 1)
       if remaining > 0 then
          minetest.chat_send_player(
             pname,

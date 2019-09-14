@@ -98,10 +98,10 @@ function ctdb.get_reinforcements_for_cache(cache, pos1, pos2)
    local reinfs = {}
    local row = cur:fetch({}, "a")
    while row do
-      local x, y, z = row.x, row.y, row.z
+      local x, y, z = tonumber(row.x), tonumber(row.y), tonumber(row.z)
       reinfs[ptos(x, y, z)] = {
          x = x, y = y, z = z,
-         value = row.value,
+         value = tonumber(row.value),
          material = row.material,
          ctgroup_id = row.ctgroup_id,
          new = false
