@@ -1,3 +1,4 @@
+
 local function has_locked_chest_privilege(pos, player)
    local pname = player:get_player_name()
    local reinf = ct.get_reinforcement(pos)
@@ -93,10 +94,15 @@ minetest.register_node(
          local inv = meta:get_inventory()
          inv:set_size("main", 8*4)
       end,
-      can_dig = function(pos,player)
-         local meta = minetest.get_meta(pos);
-         local inv = meta:get_inventory()
-         return inv:is_empty("main")
+      after_dig_node = function(pos, old, meta, digger)
+         local drops = {}
+         for _, stack in ipairs(meta.inventory.main) do
+            local item = stack:to_string()
+            if item ~= "" then
+               table.insert(drops, item)
+            end
+	end
+	minetest.handle_node_drops(pos, drops, digger)
       end,
       allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
          local meta = minetest.get_meta(pos)
