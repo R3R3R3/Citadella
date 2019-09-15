@@ -19,7 +19,7 @@ ct.PLAYER_MODE_INFO = "info"
 -- XXX: couldn't get player:set_properties working so this could be nicer
 ct.player_modes = {}
 ct.player_current_reinf_group = {}
-
+ct.player_fortify_material = {}
 
 local function set_parameterized_mode(name, param, mode)
    local player = minetest.get_player_by_name(name)
@@ -55,7 +55,10 @@ local function set_parameterized_mode(name, param, mode)
       )
    else
       ct.player_modes[pname] = ct.PLAYER_MODE_NORMAL
-      minetest.chat_send_player(pname, "Citadella mode: " .. ct.player_modes[pname])
+      minetest.chat_send_player(
+         pname,
+         "Citadella mode: " .. ct.player_modes[pname]
+      )
    end
    return true
 end
@@ -74,7 +77,27 @@ minetest.register_chatcommand("ctf", {
    params = "",
    description = "Citadella fortify mode",
    func = function(name, param)
-      set_parameterized_mode(name, param, ct.PLAYER_MODE_FORTIFY)
+      local player = minetest.get_player_by_name(name)
+      if not player then
+         return false
+      end
+      local pname = player:get_player_name()
+      local item = player:get_wielded_item()
+      local item_name = item:get_name()
+      local resource_limit = ct.resource_limits[item_name]
+      if resource_limit then
+         ct.player_fortify_material[pname] = item_name
+         set_parameterized_mode(pname, param, ct.PLAYER_MODE_FORTIFY)
+         return true
+      else
+         local valid_materials = pmutils.table_keyvals(ct.resource_limits)
+         minetest.chat_send_player(
+            pname,
+            "Error: " .. item_name .. " is not a valid reinforcement material ("
+               .. table.concat(valid_materials, ", ") .. ")."
+         )
+         return false
+      end
    end
 })
 
@@ -150,14 +173,43 @@ minetest.register_chatcommand("test", {
    end
 })
 
-
--- TODO: CTF
 -- XXX: documents say this isn't recommended, use node definition callbacks instead
 minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
       local pname = placer:get_player_name()
-      -- If we're in /ctr mode
+      -- If we're in /ctf mode
       if ct.player_modes[pname] == ct.PLAYER_MODE_FORTIFY then
+         local current_reinf_group = ct.player_current_reinf_group[pname]
+         local current_reinf_material = ct.player_fortify_material[pname]
 
+         local required_item = ItemStack({
+               name = current_reinf_material,
+               count = 1
+         });
+
+         local inv = placer:get_inventory()
+
+         -- Ensure player has the required item to create the reinforcemnt
+         if inv:contains_item("main", required_item) then
+            local resource_limit = ct.resource_limits[current_reinf_material]
+
+            ct.register_reinforcement(pos, current_reinf_group.id,
+                                      current_reinf_material, resource_limit)
+
+            minetest.chat_send_player(
+               pname,
+               "Reinforced placed block (" .. vtos(pos) .. ") with "
+                  .. current_reinf_material .. " (" .. tostring(resource_limit)
+                  .. ") (group: '" .. current_reinf_group.name .. "')."
+            )
+
+            inv:remove_item("main", required_item)
+         else
+            minetest.chat_send_player(
+               pname,
+               "Inventory has no more " .. current_reinf_material .. "."
+            )
+            set_simple_mode(pname, ct.PLAYER_MODE_NORMAL)
+         end
       end
 end)
 
