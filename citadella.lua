@@ -302,15 +302,35 @@ function minetest.is_protected(pos, pname)
       end
 
       if reinf_id_in_group_ids then
+         local refund_item_name = reinf.material
+         local refund_item = ItemStack({
+               name = refund_item_name,
+               count = 1
+         })
          -- set reinforcement value to zero
          ct.modify_reinforcement(pos, 0)
+
+         local player = minetest.get_player_by_name(pname)
+         local inv = player:get_inventory()
+         if inv:room_for_item("main", refund_item) then
+            inv:add_item("main", refund_item)
+            minetest.chat_send_player(
+               pname,
+               refund_item_name .. " refunded from bypassed reinforcement."
+            )
+         else
+            minetest.chat_send_player(
+               pname,
+               "Warning: no inventory space for refunded reinforcement "
+                  .. "material" .. refund_item_name
+            )
+         end
+
          return false
       else
          minetest.chat_send_player(pname, "You can't bypass this!")
          return true
       end
-
-      -- TODO: player may want the reinforcement material back :)
    else
       -- Decrement reinforcement
       local remaining = ct.modify_reinforcement(pos, reinf.value - 1)
