@@ -286,6 +286,20 @@ function minetest.is_protected(pos, pname)
    if not reinf then
       return false
    end
+   -- Handle people with protection_bypass privilege
+   local privs = minetest.get_player_privs(pname)
+   if privs.protection_bypass then
+      local c = minetest.colorize
+      minetest.chat_send_player(
+         pname,
+         c("#e00",
+           "WARNING: you have privilege: protection_bypass. "
+              .. "Block's reinforcement was bypassed!")
+      )
+      ct.modify_reinforcement(pos, 0)
+      return false
+   end
+
    if ct.player_modes[pname] == ct.PLAYER_MODE_BYPASS then
       -- Figure out if player is in the block's reinf group
       -- TODO: this code keeps getting duplicated...
