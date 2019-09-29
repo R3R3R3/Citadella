@@ -21,7 +21,7 @@ local function prep_db()
    db = assert (env:connect("citadella", "mt"))
 
    -- create reinforcements table
-   res = assert(u.prepare(db, [[
+   local res = assert(u.prepare(db, [[
      CREATE TABLE IF NOT EXISTS reinforcement (
          x INTEGER NOT NULL,
          y INTEGER NOT NULL,
