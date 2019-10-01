@@ -281,7 +281,10 @@ end)
 local is_protected_fn = minetest.is_protected
 
 -- BLOCK-BREAKING, /ctb
-function minetest.is_protected(pos, pname)
+function minetest.is_protected(pos, pname, action)
+   if action ~= minetest.DIG_ACTION then
+      return false
+   end
    local reinf = ct.get_reinforcement(pos)
    if not reinf then
       return false
