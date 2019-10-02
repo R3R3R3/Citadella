@@ -63,7 +63,6 @@ local function allow_metadata_inventory_put(pos, listname, index, stack, player)
                       " tried to access a locked furnace belonging to "..
                       meta:get_string("owner").." at "..
                       minetest.pos_to_string(pos))
-      minetest.chat_send_player(player:get_player_name(), "You don't have access!")
       return 0
    end
 
@@ -91,7 +90,6 @@ local function allow_metadata_inventory_move(pos, from_list, from_index, to_list
                       " tried to access a locked furnace belonging to "..
                       meta:get_string("owner").." at "..
                       minetest.pos_to_string(pos))
-      minetest.chat_send_player(player:get_player_name(), "You don't have access!")
       return 0
    end
 
@@ -107,7 +105,6 @@ local function allow_metadata_inventory_take(pos, listname, index, stack, player
                       " tried to access a locked furnace belonging to "..
                       meta:get_string("owner").." at "..
                       minetest.pos_to_string(pos))
-      minetest.chat_send_player(player:get_player_name(), "You don't have access!")
       return 0
    end
 
