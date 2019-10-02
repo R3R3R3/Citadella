@@ -5,7 +5,7 @@ local function has_locked_furnace_privilege(pos, player)
    if has_privilege then
       return true, reinf, group
    end
-
+   local pname = player:get_player_name()
    minetest.chat_send_player(pname, "Furnace is locked!")
    return false
 end
@@ -57,6 +57,7 @@ end
 --
 
 local function allow_metadata_inventory_put(pos, listname, index, stack, player)
+   local meta = minetest.get_meta(pos)
    if not has_locked_furnace_privilege(pos, player) then
       minetest.log("action", player:get_player_name()..
                       " tried to access a locked furnace belonging to "..
@@ -66,7 +67,6 @@ local function allow_metadata_inventory_put(pos, listname, index, stack, player)
       return 0
    end
 
-   local meta = minetest.get_meta(pos)
    local inv = meta:get_inventory()
    if listname == "fuel" then
       if minetest.get_craft_result({method="fuel", width=1, items={stack}}).time ~= 0 then
@@ -85,6 +85,7 @@ local function allow_metadata_inventory_put(pos, listname, index, stack, player)
 end
 
 local function allow_metadata_inventory_move(pos, from_list, from_index, to_list, to_index, count, player)
+   local meta = minetest.get_meta(pos)
    if not has_locked_furnace_privilege(pos, player) then
       minetest.log("action", player:get_player_name()..
                       " tried to access a locked furnace belonging to "..
@@ -94,13 +95,13 @@ local function allow_metadata_inventory_move(pos, from_list, from_index, to_list
       return 0
    end
 
-   local meta = minetest.get_meta(pos)
    local inv = meta:get_inventory()
    local stack = inv:get_stack(from_list, from_index)
    return allow_metadata_inventory_put(pos, to_list, to_index, stack, player)
 end
 
 local function allow_metadata_inventory_take(pos, listname, index, stack, player)
+   local meta = minetest.get_meta(pos)
    if not has_locked_furnace_privilege(pos, player) then
       minetest.log("action", player:get_player_name()..
                       " tried to access a locked furnace belonging to "..
@@ -293,6 +294,7 @@ minetest.register_node("citadella:furnace", {
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
 		meta:set_string("formspec", default.get_furnace_inactive_formspec())
+                meta:set_string("owner", "")
 		local inv = meta:get_inventory()
 		inv:set_size('src', 1)
 		inv:set_size('fuel', 1)

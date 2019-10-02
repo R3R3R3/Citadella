@@ -5,7 +5,7 @@ local function has_locked_chest_privilege(pos, player)
    if has_privilege then
       return true, reinf, group
    end
-
+   local pname = player:get_player_name()
    minetest.chat_send_player(pname, "Chest is locked!")
    return false
 end
@@ -72,7 +72,7 @@ minetest.register_node(
          local meta = minetest.get_meta(pos)
          meta:set_string("formspec", closed)
          -- meta:set_string("infotext", "Locked chest")
-         -- meta:set_string("owner", "")
+         meta:set_string("owner", "")
          local inv = meta:get_inventory()
          inv:set_size("main", 8*4)
       end,
