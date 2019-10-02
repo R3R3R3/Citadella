@@ -347,8 +347,6 @@ minetest.register_node("citadella:furnace_active", {
 	sounds = default.node_sound_stone_defaults(),
 	on_timer = furnace_node_timer,
 
-	can_dig = can_dig,
-
 	allow_metadata_inventory_put = allow_metadata_inventory_put,
 	allow_metadata_inventory_move = allow_metadata_inventory_move,
 	allow_metadata_inventory_take = allow_metadata_inventory_take,
