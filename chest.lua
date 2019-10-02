@@ -1,32 +1,13 @@
 
 local function has_locked_chest_privilege(pos, player)
-   local pname = player:get_player_name()
-   local reinf = ct.get_reinforcement(pos)
-   if not reinf then
-      return true
+   local has_privilege, reinf, group
+      = ct.has_locked_container_privilege(pos, player)
+   if has_privilege then
+      return true, reinf, group
    end
 
-   -- TODO: this code keeps getting duplicated...
-   local player_id = pm.get_player_by_name(pname).id
-   local player_groups = pm.get_groups_for_player(player_id)
-   local reinf_ctgroup_id = reinf.ctgroup_id
-   local reinf_id_in_group_ids = false
-   local group_name = ""
-
-   for _, group in ipairs(player_groups) do
-      if reinf_ctgroup_id == group.id then
-         group_name = group.name
-         reinf_id_in_group_ids = true
-         break
-      end
-   end
-
-   if reinf_id_in_group_ids then
-      return true, reinf, group_name
-   else
-      minetest.chat_send_player(pname, "Chest is locked!")
-      return false
-   end
+   minetest.chat_send_player(pname, "Chest is locked!")
+   return false
 end
 
 
@@ -153,10 +134,10 @@ minetest.register_node(
 
       on_receive_fields = function(pos, formname, fields, sender)
          local meta = minetest.get_meta(pos)
-         local can_open, reinf, group_name = has_locked_chest_privilege(pos, sender)
+         local can_open, reinf, group = has_locked_chest_privilege(pos, sender)
          if can_open then
             if fields.open == "Open" then
-               meta:set_string("formspec", make_open_formspec(reinf, group_name))
+               meta:set_string("formspec", make_open_formspec(reinf, group.name))
             else
                meta:set_string("formspec", closed)
             end

@@ -21,6 +21,29 @@ ct.player_modes = {}
 ct.player_current_reinf_group = {}
 ct.player_fortify_material = {}
 
+
+function ct.has_locked_container_privilege(pos, player)
+   local pname = player:get_player_name()
+   local reinf = ct.get_reinforcement(pos)
+   if not reinf then
+      return true
+   end
+
+   local player_id = pm.get_player_by_name(pname).id
+   local reinf_ctgroup_id = reinf.ctgroup_id
+
+   local player_in_group = pm.get_player_group(player_id, reinf_ctgroup_id)
+
+   if not player_in_group then
+      return false
+   end
+
+   local group = pm.get_group_by_id(reinf_ctgroup_id)
+
+   return true, reinf, group
+end
+
+
 local function set_parameterized_mode(name, param, mode)
    local player = minetest.get_player_by_name(name)
    if not player then
