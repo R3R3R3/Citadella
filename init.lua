@@ -17,5 +17,6 @@ local db = dofile(modpath .. "/db.lua")
 dofile(modpath .. "/cache.lua")
 dofile(modpath .. "/citadella.lua")
 dofile(modpath .. "/chest.lua")
+dofile(modpath .. "/furnace.lua")
 
 return ct
