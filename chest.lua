@@ -28,10 +28,10 @@ minetest.register_craft({
 })
 
 
-local function make_open_formspec(reinf, group_name)
+local function make_open_formspec(reinf, group)
    local chest_title = "Chest"
    if reinf then
-      chest_title = "Locked Chest (group: '" .. group_name .. "', "
+      chest_title = "Locked Chest (group: '" .. group.name .. "', "
          .. tostring(reinf.material) .. ", " .. tostring(reinf.value) .. "/"
          .. tostring(ct.resource_limits[reinf.material]) .. ")"
    end
@@ -137,7 +137,7 @@ minetest.register_node(
          local can_open, reinf, group = has_locked_chest_privilege(pos, sender)
          if can_open then
             if fields.open == "Open" then
-               meta:set_string("formspec", make_open_formspec(reinf, group.name))
+               meta:set_string("formspec", make_open_formspec(reinf, group))
             else
                meta:set_string("formspec", closed)
             end
