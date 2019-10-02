@@ -137,5 +137,5 @@ end
 
 
 minetest.register_on_shutdown(function()
-      ct.force_flush_cache()
+      -- ct.force_flush_cache()
 end)
