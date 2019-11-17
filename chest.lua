@@ -56,6 +56,8 @@ end
 local closed = "size[2,0.75]"..
 	"button[0,0.0;2,1;open;Open]"
 
+local prisonpearl = minetest.get_modpath("prisonpearl")
+
 minetest.register_node(
    "citadella:chest",
    {
@@ -126,10 +128,33 @@ minetest.register_node(
       on_metadata_inventory_put = function(pos, listname, index, stack, player)
          minetest.log("action", player:get_player_name()..
                          " moves stuff to locked chest at "..minetest.pos_to_string(pos))
+         if prisonpearl then
+            if pp.is_bound_prison_pearl(stack) then
+               local prisoner = pp.get_pearl_prisoner(stack)
+               local pearl = pp.manager.get_pearl_by_name(prisoner)
+               if pearl then
+                  pp.manager.update_pearl_location(pearl, { type = "node", pos = pos })
+                  -- minetest.log("moved " .. prisoner .. " loc to chest " .. vtos(pos))
+               end
+            end
+         end
       end,
       on_metadata_inventory_take = function(pos, listname, index, stack, player)
          minetest.log("action", player:get_player_name()..
                          " takes stuff from locked chest at "..minetest.pos_to_string(pos))
+         if prisonpearl then
+            if pp.is_bound_prison_pearl(stack) then
+               local prisoner = pp.get_pearl_prisoner(stack)
+               local pearl = pp.manager.get_pearl_by_name(prisoner)
+               if pearl then
+                  pp.manager.update_pearl_location(
+                     pearl,
+                     { type = "player", name = player:get_player_name() }
+                  )
+               end
+               -- minetest.log("moved " .. prisoner .. " loc to chest " .. vtos(pos))
+            end
+         end
       end,
 
       on_receive_fields = function(pos, formname, fields, sender)
