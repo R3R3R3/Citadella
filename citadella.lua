@@ -300,17 +300,17 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 end)
 
 
--- TODO: don't completely clobber other plugin's protection
+-- Don't completely clobber other plugin's protections
 local is_protected_fn = minetest.is_protected
 
 -- BLOCK-BREAKING, /ctb
 function minetest.is_protected(pos, pname, action)
    if action ~= minetest.DIG_ACTION then
-      return false
+      return is_protected_fn(pos, pname, action)
    end
    local reinf = ct.get_reinforcement(pos)
    if not reinf then
-      return false
+      return is_protected_fn(pos, pname, action)
    end
    -- Handle people with protection_bypass privilege
    local privs = minetest.get_player_privs(pname)
@@ -323,7 +323,7 @@ function minetest.is_protected(pos, pname, action)
               .. "Block's reinforcement was bypassed!")
       )
       ct.modify_reinforcement(pos, 0)
-      return false
+      return is_protected_fn(pos, pname, action)
    end
 
    if ct.player_modes[pname] == ct.PLAYER_MODE_BYPASS then
@@ -366,7 +366,7 @@ function minetest.is_protected(pos, pname, action)
             )
          end
 
-         return false
+         return is_protected_fn(pos, pname, action)
       else
          minetest.chat_send_player(pname, "You can't bypass this!")
          return true
@@ -381,7 +381,7 @@ function minetest.is_protected(pos, pname, action)
          )
          return true
       else
-         return false
+         return is_protected_fn(pos, pname, action)
       end
    end
 
