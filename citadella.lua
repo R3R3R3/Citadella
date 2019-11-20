@@ -22,6 +22,18 @@ ct.player_current_reinf_group = {}
 ct.player_fortify_material = {}
 
 
+-- Implementation of a Citadella placement border.
+
+local zerozero = vector.new(0, 0, 0)
+
+local citadella_border_radius = 950
+
+function ct.position_in_citadella_border(pos)
+   local pos_no_y = vector.new(pos.x, 0, pos.z)
+   return vector.distance(pos_no_y, zerozero) < citadella_border_radius
+end
+
+
 function ct.has_locked_container_privilege(pos, player)
    local pname = player:get_player_name()
    local reinf = ct.get_reinforcement(pos)
@@ -201,6 +213,11 @@ minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack
       local pname = placer:get_player_name()
       -- If we're in /ctf mode
       if ct.player_modes[pname] == ct.PLAYER_MODE_FORTIFY then
+         if not ct.position_in_citadella_border(pos) then
+            minetest.chat_send_player(pname, "You can't fortify blocks here!")
+            return
+         end
+
          local current_reinf_group = ct.player_current_reinf_group[pname]
          local current_reinf_material = ct.player_fortify_material[pname]
 
@@ -241,6 +258,11 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
       local pname = puncher:get_player_name()
       -- If we're in /ctr mode
       if ct.player_modes[pname] == ct.PLAYER_MODE_REINFORCE then
+         if not ct.position_in_citadella_border(pos) then
+            minetest.chat_send_player(pname, "You can't reinforce blocks here!")
+            return
+         end
+
          local current_reinf_group = ct.player_current_reinf_group[pname]
          local item = puncher:get_wielded_item()
          -- If we punch something with a reinforcement item
