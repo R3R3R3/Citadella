@@ -336,7 +336,7 @@ function minetest.is_protected(pos, pname, action)
    end
    -- Handle people with protection_bypass privilege
    local privs = minetest.get_player_privs(pname)
-   if privs.protection_bypass then
+   if privs and privs.protection_bypass then
       local c = minetest.colorize
       minetest.chat_send_player(
          pname,
